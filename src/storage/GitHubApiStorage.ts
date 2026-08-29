@@ -174,8 +174,11 @@ export class GitHubApiStorage implements IStorage {
       const rawUrl = meta.download_url;
       if (!rawUrl) return null;
 
-      // 用 GitHub raw URL 走直链（无需 token，CDN 加速）
       const headers: Record<string, string> = {};
+      // 私有仓库需要 Authorization header（公开仓库也兼容）
+      if (this.token) {
+        headers['Authorization'] = `token ${this.token}`;
+      }
       if (range) {
         headers['Range'] = `bytes=${range[0]}-${range[1]}`;
       }
@@ -331,6 +334,8 @@ export class GitHubApiStorage implements IStorage {
 
   async getDownUrl(name: string, filename: string, contentType?: string): Promise<string | null> {
     if (!this.resolvedRef) await this.initialize();
+    // 私有仓库的 raw URL 需要 Authorization header，浏览器 302 无法携带，强制走 Worker 代理
+    if (this.token) return null;
     try {
       const meta = await this.fetchJson(this.fileApiUrl(this.hashToPath(name)));
       const raw = meta.download_url || null;
