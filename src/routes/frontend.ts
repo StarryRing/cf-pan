@@ -324,6 +324,8 @@ frontend.get('/', async (c) => {
 </div>
 </div>`;
 
+  // 首页可被 Cloudflare 缓存（用户上传/删除后等待缓存过期即可刷新）
+  c.header('Cache-Control', 'public, max-age=300, s-maxage=300');
   return c.html(publicLayout(title, body, siteUrlStr, isMine ? 'mine' : 'index', false, config.title));
 });
 
